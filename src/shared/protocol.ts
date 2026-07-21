@@ -16,6 +16,8 @@ export const MSG = {
   ready: 'ready',
   /** 無 payload,結束後請求再來一場 */
   rematch: 'rematch',
+  /** WebRTC 信令(offer/answer/candidate),伺服器只轉發給對手,不解析內容 */
+  rtc: 'rtc',
 } as const
 
 /** 房間 metadata(大廳列表會看到) */

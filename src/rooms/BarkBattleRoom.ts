@@ -84,6 +84,13 @@ export class BarkBattleRoom extends Room<BarkBattleState> {
       if (all && this.state.players.size === 2) this.startCountdown()
     })
 
+    this.onMessage(MSG.rtc, (client, payload: unknown) => {
+      // WebRTC 信令中繼:原封不動轉發給房內另一位玩家(語音走 P2P,不經伺服器)
+      this.clients.forEach((c) => {
+        if (c.sessionId !== client.sessionId) c.send(MSG.rtc, payload)
+      })
+    })
+
     this.setSimulationInterval((dtMs) => this.tick(dtMs / 1000), 1000 / TICK_HZ)
   }
 
