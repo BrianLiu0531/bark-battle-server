@@ -44,6 +44,14 @@ export interface VolleyRoomMeta {
 
 /** 伺服器模擬 / 廣播頻率 */
 export const VOLLEY_TICK_HZ = 30
+
+/**
+ * 物理固定子步長(秒)。網路 tick 是 30Hz,但物理必須以 1/60 推進:
+ * 球速最高 1100px/s,30Hz 一步就跳 ~37px,離散碰撞檢查會讓球從選手判定圓的
+ * 邊緣「穿過去」,玩家感覺就是「連線模式碰撞範圍變小」。固定 1/60 與單機端
+ * 60fps 的判定密度一致,手感才會一樣。
+ */
+export const VOLLEY_FIXED_DT = 1 / 60
 /** 就緒後的開場倒數秒數 */
 export const VOLLEY_COUNTDOWN_SEC = 3
 /** 先得幾分獲勝(與單機 TARGET_POINTS 一致) */

@@ -10,6 +10,8 @@ import { BARK_BATTLE_ROOM } from './shared'
 import { BarkBattleRoom } from './rooms/BarkBattleRoom'
 import { CRITTER_VOLLEY_ROOM } from './shared/volley'
 import { CritterVolleyRoom } from './rooms/CritterVolleyRoom'
+import { BLOCK_BATTLE_ROOM } from './shared/block'
+import { BlockBattleRoom } from './rooms/BlockBattleRoom'
 
 const port = Number(process.env.PORT ?? 2567)
 
@@ -24,6 +26,7 @@ const gameServer = new Server({ server })
 // ── 遊戲房間註冊(每款遊戲一行) ────────────────────────────────
 gameServer.define(BARK_BATTLE_ROOM, BarkBattleRoom).enableRealtimeListing()
 gameServer.define(CRITTER_VOLLEY_ROOM, CritterVolleyRoom).enableRealtimeListing()
+gameServer.define(BLOCK_BATTLE_ROOM, BlockBattleRoom).enableRealtimeListing()
 // gameServer.define('next-game', NextGameRoom).enableRealtimeListing()
 
 gameServer.listen(port).then(() => {

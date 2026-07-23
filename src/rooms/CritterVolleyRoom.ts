@@ -13,6 +13,7 @@ import {
   V_HOME_X,
   VMSG,
   VOLLEY_COUNTDOWN_SEC,
+  VOLLEY_FIXED_DT,
   VOLLEY_TARGET_POINTS,
   VOLLEY_TICK_HZ,
   VEV,
@@ -87,6 +88,8 @@ export class CritterVolleyRoom extends Room<CritterVolleyState> {
 
   private ball!: NetVolleyBall
   private sims: [NetVolleyPlayer, NetVolleyPlayer] | null = null
+  /** 固定步長物理的時間累加器(秒)。 */
+  private acc = 0
   private inputs = new Map<string, HeldInput>() // sessionId → 最新持續輸入
   private roundActive = false
   private scheduled: Scheduled[] = []
@@ -208,18 +211,32 @@ export class CritterVolleyRoom extends Room<CritterVolleyState> {
     }
     if (s.phase !== 'battle' || !this.sims) return
 
+    // 物理以固定 1/60 子步長推進(見 VOLLEY_FIXED_DT):30Hz 的粗步長會讓快速球
+    // 從選手判定圓邊緣掠過而漏判,手感上就像「碰撞範圍變小」。
+    // 上限 8 步:主機卡頓時寧可慢動作,也不要追步追到雪崩。
+    this.acc = Math.min(this.acc + dt, VOLLEY_FIXED_DT * 8)
+    while (this.acc >= VOLLEY_FIXED_DT) {
+      this.acc -= VOLLEY_FIXED_DT
+      this.stepPhysics(VOLLEY_FIXED_DT)
+    }
+
+    this.syncSchema()
+  }
+
+  /** 單一固定步長的物理推進(輸入 → 選手 → 球)。 */
+  private stepPhysics(dt: number): void {
     // 套用輸入(與單機一致:回合尚未開球時選手也能移動)。
     this.state.players.forEach((p, sessionId) => {
       const held = this.inputs.get(sessionId)
       const sim = this.sims![p.slot as 0 | 1]
       if (!held || !sim) return
+      // 跳躍是邊緣觸發:只在本次 tick 的第一個子步長生效,不能每個子步長都跳。
       const jump = held.jumpQueued
       held.jumpQueued = false
       sim.step(dt, { dir: p.connected ? held.d : 0, jumpPressed: p.connected && jump, charge: p.connected && held.c })
     })
 
     this.ball.step(dt)
-    this.syncSchema()
   }
 
   private syncSchema(): void {
@@ -271,6 +288,7 @@ export class CritterVolleyRoom extends Room<CritterVolleyState> {
     s.serveSlot = 1 // 與單機一致:首發由右側發球
     s.msgKey = ''
     s.msgSlot = -1
+    this.acc = 0
     s.countdown = VOLLEY_COUNTDOWN_SEC
     s.players.forEach((p) => {
       p.rematch = false
